@@ -1,42 +1,47 @@
-const path = require('path');
+// test.js ou addClassToElement.test.js
+
 const { JSDOM } = require('jsdom');
 
-// Charger l'HTML depuis le fichier index.html
-const html = fs.readFileSync(path.resolve(__dirname, '../../index.html'), 'utf8');
+describe('addClassToElement function', () => {
+  let document;
+  let addButton;
+  let element;
+  let addClassToElement;
 
-// Charger le contenu de index.html dans JSDOM
-const html = fs.readFileSync('../index.html', 'utf-8');
-const { window } = new JSDOM(html);
-const { document } = window;
-
-// Injecter le window et document dans global
-global.window = window;
-global.document = document;
-
-  // Avant chaque test, initialiser le DOM avec JSDOM et charger le script ex3.js
   beforeEach(() => {
-    // Créer un nouvel objet JSDOM avec l'HTML chargé
-    dom = new JSDOM(html, { runScripts: "dangerously" });
+    const dom = new JSDOM(`
+      <html>
+        <body>
+          <button id="add-class-button">Add Class</button>
+          <div id="element" class="initial-class"></div>
+        </body>
+      </html>
+    `);
+
+    global.document = dom.window.document;
     document = dom.window.document;
+    addButton = document.getElementById('add-class-button');
+    element = document.getElementById('element');
 
-    // Charger le contenu du script ex3.js dans une balise <script> du DOM simulé
-    const scriptContent = fs.readFileSync(path.resolve(__dirname, './ex1.js'), 'utf8');
-    const scriptElement = document.createElement("script");
-    scriptElement.textContent = scriptContent;
-    document.body.appendChild(scriptElement);
-
-
+    // Réinitialiser le module avant chaque test
+    jest.resetModules();
+    const script = require('./ex1');
+    addClassToElement = script.addClassToElement;
   });
 
-describe('Testing addClassToElement function', function() {
-  it('Should add new-class to element when button is clicked', function() {
-    // Simuler un clic sur le bouton
-    const addButton = document.getElementById('add-class-button');
-    const element = document.getElementById('element');
+  test('should add new-class to the element when function is called', () => {
+    addClassToElement();
+    expect(element.classList.contains('new-class')).toBeTruthy();
+  });
 
-    addButton.click();
+  test('should keep the initial-class on the element', () => {
+    addClassToElement();
+    expect(element.classList.contains('initial-class')).toBeTruthy();
+  });
 
-    // Vérifier si la classe new-class a été ajoutée à l'élément
-    assert.isTrue(element.classList.contains('new-class'), "Class 'new-class' should be added");
+  test('should not add new-class multiple times', () => {
+    addClassToElement();
+    addClassToElement();
+    expect(element.classList.toString().split(' ').filter(c => c === 'new-class').length).toBe(1);
   });
 });

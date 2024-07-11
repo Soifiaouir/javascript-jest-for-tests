@@ -1,62 +1,60 @@
-
-const fs = require('fs');
-const path = require('path');
 const { JSDOM } = require('jsdom');
 
-// Charger l'HTML depuis le fichier index.html
-const html = fs.readFileSync(path.resolve(__dirname, '../../index.html'), 'utf8');
+describe('Email Validation', () => {
+  let document, emailForm, emailInput, validationMessage, validateEmail, init;
 
-// Déclarer les variables pour le DOM et le document
-let dom;
-let document;
-let emailInput;
-let validationMessage;
-
-  // Avant chaque test, initialiser le DOM avec JSDOM et charger le script ex3.js
   beforeEach(() => {
-    // Créer un nouvel objet JSDOM avec l'HTML chargé
-    dom = new JSDOM(html, { runScripts: "dangerously" });
+    const dom = new JSDOM(`
+      <html>
+        <body>
+          <form id="email-form">
+            <input type="text" id="email-input">
+            <button type="submit">Submit</button>
+          </form>
+          <p id="validation-message"></p>
+        </body>
+      </html>
+    `);
+
+    global.document = dom.window.document;
+    global.window = dom.window;
     document = dom.window.document;
 
-    // Charger le contenu du script ex3.js dans une balise <script> du DOM simulé
-    const scriptContent = fs.readFileSync(path.resolve(__dirname, './ex3.js'), 'utf8');
-    const scriptElement = document.createElement("script");
-    scriptElement.textContent = scriptContent;
-    document.body.appendChild(scriptElement);
+    // Importer les fonctions du script
+    const script = require('./ex3');
+    init = script.init;
+    validateEmail = script.validateEmail;
 
- // Sélectionner les éléments du DOM nécessaires pour les tests
- emailInput = document.getElementById('email-input');
- validationMessage = document.getElementById('validation-message');
+    // Initialiser les éléments
+    init();
+
+    // Récupérer les éléments après l'initialisation
+    emailForm = document.getElementById('email-form');
+    emailInput = document.getElementById('email-input');
+    validationMessage = document.getElementById('validation-message');
   });
 
-  // Test unitaire pour la fonction validateEmail
-test('validateEmail - empty email', () => {
-    // Simuler une soumission de formulaire avec un email vide
-    emailInput.value = '';
-    emailForm.dispatchEvent(new dom.window.Event('submit'));
-  
-    // Vérifier que le message de validation est correct
-    expect(validationMessage.textContent).toBe('Email cannot be empty');
-    expect(validationMessage.style.color).toBe('red');
-  });
-  
-  test('validateEmail - invalid email format', () => {
-    // Simuler une soumission de formulaire avec un email invalide
-    emailInput.value = 'invalidemail';
-    emailForm.dispatchEvent(new dom.window.Event('submit'));
-  
-    // Vérifier que le message de validation est correct
-    expect(validationMessage.textContent).toBe('Please enter a valid email address');
-    expect(validationMessage.style.color).toBe('red');
-  });
-  
-  test('validateEmail - valid email', () => {
-    // Simuler une soumission de formulaire avec un email valide
+  test('should validate a correct email address', () => {
     emailInput.value = 'test@example.com';
-    emailForm.dispatchEvent(new dom.window.Event('submit'));
-  
-    // Vérifier que le message de validation est correct
-    expect(validationMessage.textContent).toBe('Email is valid ✔️');
-    expect(validationMessage.style.color).toBe('green');
+    validateEmail();
+    expect(validationMessage.textContent).toBe("Email valide !");
+    expect(validationMessage.style.color).toBe("green");
   });
-  
+
+  test('should invalidate an incorrect email address', () => {
+    emailInput.value = 'invalid-email';
+    validateEmail();
+    expect(validationMessage.textContent).toBe("Email non valide. Veuillez réessayer.");
+    expect(validationMessage.style.color).toBe("red");
+  });
+
+  test('should prevent form submission', () => {
+    const mockPreventDefault = jest.fn();
+    const submitEvent = new window.Event('submit');
+    submitEvent.preventDefault = mockPreventDefault;
+    
+    emailForm.dispatchEvent(submitEvent);
+
+    expect(mockPreventDefault).toHaveBeenCalled();
+  });
+});

@@ -1,41 +1,40 @@
-// script.js
+// Déclaration des variables globales
+let emailForm, emailInput, validationMessage;
 
-// Sélection des éléments du DOM
-const emailForm = document.getElementById('email-form');
-const emailInput = document.getElementById('email-input');
-const validationMessage = document.getElementById('validation-message');
+// Fonction d'initialisation
+function init() {
+  emailForm = document.getElementById('email-form');
+  emailInput = document.getElementById('email-input');
+  validationMessage = document.getElementById('validation-message');
 
-// Fonction pour valider l'email
-function validateEmail() {
-  // Récupérer la valeur de l'email entré par l'utilisateur et supprimer les espaces vides autour
-  const email = emailInput.value.trim();
-
-  // Expression régulière pour la validation d'email (simple pour cet exemple)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  // Vérifier si l'email est vide
-  if (email === '') {
-    // Afficher un message d'erreur si l'email est vide
-    validationMessage.textContent = 'Email cannot be empty';
-    validationMessage.style.color = 'red';
-    return; // Arrêter l'exécution de la fonction
+  if (emailForm) {
+    emailForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      validateEmail();
+    });
   }
-
-  // Vérifier si l'email ne correspond pas au format requis par l'expression régulière
-  if (!emailRegex.test(email)) {
-    // Afficher un message d'erreur si l'email n'est pas valide
-    validationMessage.textContent = 'Please enter a valid email address';
-    validationMessage.style.color = 'red';
-    return; // Arrêter l'exécution de la fonction
-  }
-
-  // Si toutes les validations passent, afficher un message de confirmation que l'email est valide
-  validationMessage.textContent = 'Email is valid ✔️';
-  validationMessage.style.color = 'green';
 }
 
-// Écouter l'événement de soumission du formulaire
-emailForm.addEventListener('submit', function (e) {
-  e.preventDefault(); // Empêcher le comportement par défaut du formulaire (rechargement de la page)
-  validateEmail(); // Appeler la fonction pour valider l'email
-});
+// Fonction de validation d'email
+function validateEmail() {
+  const email = emailInput.value.trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (emailRegex.test(email)) {
+    validationMessage.textContent = "Email valide !";
+    validationMessage.style.color = "green";
+  } else {
+    validationMessage.textContent = "Email non valide. Veuillez réessayer.";
+    validationMessage.style.color = "red";
+  }
+}
+
+// Initialisation si le document est chargé
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', init);
+}
+
+// Export pour les tests
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { init, validateEmail };
+}
